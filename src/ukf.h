@@ -22,6 +22,18 @@ public:
 
   ///* if this is false, radar measurements will be ignored (except for init)
   bool use_radar_;
+  
+  ///* Counts how often nis-value gets over X^2.050
+  int count_nis_radar_;
+  
+  ///* Counts how often nis-value gets over X^2.050
+  int count_nis_lidar_;
+  
+  ///* Limit of nis-value for X^2.050 (radar -> df=3)
+  float limit_nis_radar_;
+  
+  ///* Limit of nis-value for X^2.050 (lidar -> df=2)
+  float limit_nis_lidar_;
 
   ///* state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   VectorXd x_;

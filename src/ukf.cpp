@@ -20,6 +20,18 @@ UKF::UKF() {
 
   // if this is false, radar measurements will be ignored (except during init)
   use_radar_ = true;
+  
+  // Counts how often nis-value gets over X^2.050
+  count_nis_radar_ = 0;
+  
+  // Counts how often nis-value gets over X^2.050
+  count_nis_lidar_ = 0;
+  
+  // Set limit of nis-value for X^2.050 (radar -> df=3)
+  limit_nis_radar_ = 7.815;
+  
+  //Limit of nis-value for X^2.050 (lidar -> df=2)
+  limit_nis_lidar_ = 5.991;
 
   // initial state vector
   x_ = VectorXd(5);
@@ -59,7 +71,6 @@ UKF::UKF() {
   
   // Weights of sigma points
   weights_ = VectorXd(2*n_aug_ + 1);
-  
   weights_(0) = lambda_ / (lambda_ + n_aug_);
   for (int i=1; i < 2*n_aug_ + 1; i++) {
     weights_(i) = 0.5/(lambda_ + n_aug_);
@@ -73,13 +84,11 @@ UKF::~UKF() {}
  * either radar or laser.
  */
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
-  // TODO:
-  
   /*****************************************************************************
    *  Initialization
    ****************************************************************************/
   if (!is_initialized_) {
-    // Initialize the state ekf_.x_
+    // Initialize the state x_
     cout << "UKF: " << endl;
     x_ << 1, 1, 1, 1, 1;
     
@@ -110,7 +119,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     else {
       // Can't initialize measurement data
       // Measurement type and used filter are not equivalent
-      // Check FusionEKF::FusionEKF() for configuration
+      // Check UKF::UKF() for configuration
       // Both sensor types are disabled if you get here
       return;
     }
@@ -141,15 +150,21 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   if (meas_package.sensor_type_ == MeasurementPackage::RADAR && use_radar_ == true) {
     // Radar updates
     UpdateRadar(meas_package);
+    
+    cout << "Radar sensor measurement" << endl;
+    cout << "Count NIS-Limit-Radar reached: " << count_nis_radar_ << endl;
   }
   else if (meas_package.sensor_type_ == MeasurementPackage::LASER && use_laser_ == true) {
     // Laser updates
     UpdateLidar(meas_package);
+    
+    cout << "Lidar sensor measurement" << endl;
+    cout << "Count NIS-Limit-Lidar reached: " << count_nis_lidar_ << endl;
   }
   else {
     // Nothing to update
     // Measurement type and used filter are not equivalent
-    // Check FusionEKF::FusionEKF() for configuration
+    // Check UKF::UKF() for configuration
     // Both sensor types are disabled if you get here
   }
   
@@ -368,6 +383,10 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   // Update NIS for radar sensor
   NIS_laser_ = z_diff.transpose() * S.inverse() * z_diff;
   
+  // Update if NIS limit is reached
+  if(NIS_laser_ > limit_nis_lidar_)
+    count_nis_lidar_ += 1;
+  
   // Update state mean and covariance matrix
   x_ = x_ + K * z_diff;
   P_ = P_ - K*S*K.transpose();
@@ -479,6 +498,10 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   
   // Update NIS for radar sensor
   NIS_radar_ = z_diff.transpose() * S.inverse() * z_diff;
+  
+  // Update if NIS limit is reached
+  if(NIS_radar_ > limit_nis_radar_)
+    count_nis_radar_ += 1;
   
   // Update state mean and covariance matrix
   x_ = x_ + K * z_diff;
