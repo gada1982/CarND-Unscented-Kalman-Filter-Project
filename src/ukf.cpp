@@ -28,10 +28,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 30; // TODO lower
+  std_a_ = 3; // TODO ??
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 30; // TODO lower
+  std_yawdd_ = 2; // TODO ??
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -58,7 +58,7 @@ UKF::UKF() {
   lambda_ = 3 - n_x_;
   
   // Weights of sigma points
-  VectorXd weights_ = VectorXd(2*n_aug_ + 1);
+  weights_ = VectorXd(2*n_aug_ + 1);
   
   weights_(0) = lambda_ / (lambda_ + n_aug_);
   for (int i=1; i < 2*n_aug_ + 1; i++) {
@@ -127,7 +127,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
    ****************************************************************************/
   
   //compute the time elapsed between the current and previous measurements
-  float dt = (meas_package.timestamp_ - time_us_) / 1000000.0;	// dt - expressed in seconds
+  double dt = (meas_package.timestamp_ - time_us_) / 1000000.0;	// dt - expressed in seconds
   time_us_ = meas_package.timestamp_;
   
   cout << "\ndt = " << dt << endl;
@@ -155,7 +155,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   
   // Print the output
   cout << "x_ = " << x_ << endl;
-  cout << "P_ = " << P_ << endl;
+  cout << "P_ = \n" << P_ << endl;
 }
 
 /**
@@ -164,12 +164,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  * measurement and this one.
  */
 void UKF::Prediction(double delta_t) {
-  /**
-  TODO:
-
-  Complete this function! Estimate the object's location. Modify the state
-  vector, x_. Predict sigma points, the state, and the state covariance matrix.
-  */
   Tools tools;
   
   /*****************************************************************************
@@ -204,6 +198,8 @@ void UKF::Prediction(double delta_t) {
   /*****************************************************************************
    * Predict sigma points
    ****************************************************************************/
+  Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
+  
   for (int i = 0; i< 2*n_aug_ + 1; i++)
   {
     //extract values for better readability
@@ -253,10 +249,10 @@ void UKF::Prediction(double delta_t) {
    ****************************************************************************/
   //predicted state mean
   x_.fill(0.0);
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+  for (int i = 0; i < 2*n_aug_ + 1; i++) {
     x_ = x_ + weights_(i) * Xsig_pred_.col(i);
   }
-  
+
   //predicted state covariance matrix
   P_.fill(0.0);
   for (int i = 0; i < 2 * n_aug_ + 1; i++) {
