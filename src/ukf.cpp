@@ -265,7 +265,7 @@ void UKF::Prediction(double delta_t) {
     VectorXd x_diff = Xsig_pred_.col(i) - x_;
     
     // Normalize angle value
-    tools.NormalizeAngleValue(x_diff(3));
+    x_diff(3) = tools.NormalizeAngleValue(x_diff(3));
     
     // Calculate Predicted Covariance
     P_ = P_ + weights_(i) * x_diff * x_diff.transpose() ;

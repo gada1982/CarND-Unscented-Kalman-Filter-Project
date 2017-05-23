@@ -23,7 +23,7 @@ public:
   /**
    * A helper method to normalize angle values
    */
-  void NormalizeAngleValue(double& angleValue);
+  double NormalizeAngleValue(double angleValue);
 
 };
 
